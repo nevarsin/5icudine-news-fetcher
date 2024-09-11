@@ -14,6 +14,7 @@ import io
 import os
 import threading
 import time
+import datetime
 from bs4 import BeautifulSoup
 
 # Dynamic configuration
@@ -55,28 +56,21 @@ def check_and_add_string(file_path, string_to_add):
         add_string_to_csv(file_path, string_to_add)
         return 0
 
-# Send request to fetch the HTML source from the school website
-response = requests.get(school_url)
-html_source = response.text
-
-# Parse the fetched HTML and filter through it to find the <div> element containing the newsposts
-soup = BeautifulSoup(html_source, 'html.parser')
-articles = soup.find_all("div", "layout-articolo2")
-
 # iterate through the found newsposts, checking they already have been announced (href present in the CSV)
 # and, if not, send a telegram image with title and href as caption
 def news_fetch():
-    print("fetching...")
-    for link in reversed(articles):
-        # Fetch newsposts details
-        link_title = link.find('a').get('title')
-        link_href = link.find('a').get('href')
-        link_day = link.find_all("span", class_="dataGiorno")[0].get_text()
-        link_month = link.find_all("span", class_="dataMese")[0].get_text()
-        link_year = link.find_all("span", class_="dataAnno")[0].get_text()
+    # Send request to fetch the HTML source from the school website
+    response = requests.get(school_url)
+    html_source = response.text
 
-        # This required regexp magic to get the image url from CSS properties
-        link_image_url = re.search(r"(?P<url>https?://[^\s]+)\);", link.find_all("div", class_="immagine_post")[0].get("style")).group("url")
+    # Parse the fetched HTML and filter through it to find the <div> element containing the newsposts
+    soup = BeautifulSoup(html_source, 'html.parser')
+    articles = soup.find_all("div", "layout-articolo2")
+
+    print('{:%Y-%m-%d %H:%M:%S} fetching...'.format(datetime.datetime.now()))
+    for link in reversed(articles):
+        # Fetch newsposts href
+        link_href = link.find('a').get('href')
 
         # Check whether the newspost shall be notified via Telegram by checking whether the newspost href is already stored
         # in the CSV file
@@ -84,6 +78,14 @@ def news_fetch():
 
         # If this has not been notified, then prepare payload, fetch the newspost image and send the Telegram API request
         if (shall_notify==0):
+            link_title = link.find('a').get('title')
+            link_day = link.find_all("span", class_="dataGiorno")[0].get_text()
+            link_month = link.find_all("span", class_="dataMese")[0].get_text()
+            link_year = link.find_all("span", class_="dataAnno")[0].get_text()
+
+            # This required regexp magic to get the image url from CSS properties
+            link_image_url = re.search(r"(?P<url>https?://[^\s]+)\);", link.find_all("div", class_="immagine_post")[0].get("style")).group("url")
+
             params = {
                 'chat_id': telegram_chat_id,
                 'caption': link_title+": "+link_href,
@@ -99,9 +101,9 @@ def news_fetch():
             }
             response = requests.post(telegram_url, data=params, files=files)
             if response.status_code == 200:
-                print("Message sent successfully: "+link_title)
+                print("{:%Y-%m-%d %H:%M:%S} Message sent successfully: ".format(datetime.datetime.now())+link_title)
             else:
-                print(f"Failed to send message. Response code: {response.status_code}")
+                print("{:%Y-%m-%d %H:%M:%S} Failed to send message. Response code: ".format(datetime.datetime.now())+str(response.status_code))
                 print(response.text)
 
 # Actual start of the task scheduler
