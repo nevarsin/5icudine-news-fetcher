@@ -44,6 +44,10 @@ docker run -d -e TELEGRAM_BOT_TOKEN='<your_telegram_bot_token>' \
 stefanochittaro/5icudine_news_fetcher:1.0.0
 ```
 
-# TODOs
-- improve logging
-- fetch article details (title, date, etc) only when shall_notify is set to 0
+## Run in docker-compose
+Customize the docker-compose.yaml with your params, then
+```
+docker compose up -d
+```
+
+Docker image available [here](https://hub.docker.com/r/stefanochittaro/5icudine_news_fetcher)
