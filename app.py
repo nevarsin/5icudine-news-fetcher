@@ -67,7 +67,7 @@ articles = soup.find_all("div", "layout-articolo2")
 # and, if not, send a telegram image with title and href as caption
 def news_fetch():
     print("fetching...")
-    for link in articles:
+    for link in reversed(articles):
         # Fetch newsposts details
         link_title = link.find('a').get('title')
         link_href = link.find('a').get('href')

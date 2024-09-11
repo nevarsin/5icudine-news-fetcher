@@ -1,0 +1,12 @@
+services:
+  5icudine-news-fetcher:
+    container_name: 5icudine-news-fetcher
+    image: stefanochittaro/5icudine_news_fetcher:0.1.1
+    restart: unless-stopped
+    environment:
+      TELEGRAM_BOT_TOKEN: "YOURTELEGRAMBOTTOKEN"
+      TELEGRAM_BOT_CHATID: "YOURTELEGRAMCHATID"
+      CSV_FILE_PATH: "YOURFILE.csv"
+      SCHEDULE_INTERVAL_SECONDS: "7200" # Optional
+    volumes:
+      - ./YOURFILE.csv:/usr/src/app/YOURFILE.csv # Optional for persistence
