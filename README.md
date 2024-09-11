@@ -8,6 +8,12 @@ Istituto Comprensivo V - Udine and subsequent announcement via Telegram bot
 It was developed because crucial information for parents is posted there (e.g. strikes) but the school does not provide
 any way to get such information in a notification manner
 
+## Description (ITA)
+Lo script permette di catturare le "NOTIZIE IN EVIDENZA" dalla home page ufficiale del V Istituto Comprensivo do Udine (https://5icudine.edu.it)
+e annunciarne la pubblicazione tramite bot Telegram.
+Lo svilupo si è reso necessario dal fatto che informazioni cruciali per i genitori vengono pubblicate su tale bacheca (es. scioperi) ma non vi è
+alcuno strumento messo a disposizione dall'istituzione per la ricezione in maniera passiva (es. mail o app)
+
 ## DISCLAIMER (ITA)
 Il presente progetto non è in alcun modo affiliato con l'Istituto Comprensivo V di Udine, il Ministero dell'Istruzione (e del Merito, lol)
 o qualsivoglia entità statale del governo Italiano.
