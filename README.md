@@ -41,7 +41,7 @@ docker run -d -e TELEGRAM_BOT_TOKEN='<your_telegram_bot_token>' \
 -e CSV_FILE_PATH='<path to your CSV file>' \
 -e SCHEDULE_INTERVAL_SECONDS='<number in seconds>' \
 -v $(pwd)/yourfile.csv:/usr/src/app/yourfile.csv \ # in case you want persistence
-stefanochittaro/5icudine_news_fetcher:1.0.0
+stefanochittaro/5icudine_news_fetcher:0.1.2
 ```
 
 ## Run in docker-compose
