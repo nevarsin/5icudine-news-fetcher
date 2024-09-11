@@ -43,3 +43,7 @@ docker run -d -e TELEGRAM_BOT_TOKEN='<your_telegram_bot_token>' \
 -v $(pwd)/yourfile.csv:/usr/src/app/yourfile.csv \ # in case you want persistence
 stefanochittaro/5icudine_news_fetcher:1.0.0
 ```
+
+# TODOs
+- improve logging
+- fetch article details (title, date, etc) only when shall_notify is set to 0
