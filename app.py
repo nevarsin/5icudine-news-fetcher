@@ -7,6 +7,7 @@
 # It was developed because crucial information for parents is posted there (e.g. strikes) but the school does not provide
 # any way to get such information in a notification manner
 
+import sys
 import requests
 import re
 import csv
@@ -22,6 +23,16 @@ telegram_bot_token = os.environ.get("TELEGRAM_BOT_TOKEN")
 telegram_chat_id = os.environ.get("TELEGRAM_BOT_CHATID")
 csv_file_path = os.environ.get("CSV_FILE_PATH")
 schedule_interval = int(os.getenv("SCHEDULE_INTERVAL_SECONDS", 7200))
+
+# Check required parameters
+if not telegram_bot_token:
+    sys.exit("Missing TELEGRAM_BOT_TOKEN environment variable. Please provide a value for that")
+if not telegram_chat_id:
+    sys.exit("Missing TELEGRAM_BOT_CHATID environment variable. Please provide a value for that")
+
+# Avoid interval less than 2 hours. No need to spam that server
+if schedule_interval < 7200:
+    schedule_interval = 7200
 
 # Static configuration
 school_url = 'https://5icudine.edu.it'
