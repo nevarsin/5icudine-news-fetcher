@@ -17,6 +17,9 @@ import time
 import datetime
 from bs4 import BeautifulSoup
 
+def log(message):
+    print(f'[{datetime.datetime.now():%Y-%m-%d %H:%M:%S}] {message}')
+
 # Dynamic configuration
 telegram_bot_token = os.environ.get("TELEGRAM_BOT_TOKEN")
 telegram_chat_id = os.environ.get("TELEGRAM_BOT_CHATID")
@@ -26,16 +29,18 @@ schedule_interval = int(os.getenv("SCHEDULE_INTERVAL_SECONDS", 7200))
 
 # Check required parameters
 if not telegram_bot_token:
-    sys.exit("Missing TELEGRAM_BOT_TOKEN environment variable. Please provide a value for that")
+    log("Missing TELEGRAM_BOT_TOKEN environment variable. Please provide a value for that")
+    sys.exit(-1)
 if not telegram_chat_id:
-    sys.exit("Missing TELEGRAM_BOT_CHATID environment variable. Please provide a value for that")
+    log("Missing TELEGRAM_BOT_CHATID environment variable. Please provide a value for that")
+    sys.exit(-2)
 if csv_file_path:
     file_path = csv_file_path
-    print("WARNING: CSV_FILE_PATH environment variable is now OBSOLETE. Please use FILE_PATH instead")
+    log("WARNING: CSV_FILE_PATH environment variable is now OBSOLETE. Please use FILE_PATH instead")
 
 if not file_path:
-    filePath = "records.txt"
-    print("No storage file selected. All records will be deleted along with container")
+    file_path = "records.txt"
+    log("No storage file selected. Using 'records.txt'. All records will be deleted along with container")
 
 # Avoid interval less than 2 hours. No need to spam that server
 if schedule_interval < 7200:
@@ -79,7 +84,7 @@ def news_fetch():
     soup = BeautifulSoup(html_source, 'html.parser')
     articles = soup.find_all("div", "layout-articolo2")
 
-    print('{:%Y-%m-%d %H:%M:%S} fetching...'.format(datetime.datetime.now()))
+    log('fetching...')
     for link in reversed(articles):
         # Fetch newsposts href
         link_href = link.find('a').get('href')
@@ -113,10 +118,10 @@ def news_fetch():
             }
             response = requests.post(telegram_url, data=params, files=files)
             if response.status_code == 200:
-                print("{:%Y-%m-%d %H:%M:%S} Message sent successfully: ".format(datetime.datetime.now())+link_title)
+                log(f'Message sent successfully: {link_title}')
             else:
-                print("{:%Y-%m-%d %H:%M:%S} Failed to send message. Response code: ".format(datetime.datetime.now())+str(response.status_code))
-                print(response.text)
+                log(f'Failed to send message. Response code: {response.status_code}')
+                log(response.text)
 
 # Actual start of the task scheduler
 task_thread = threading.Thread(target=schedule_task)
