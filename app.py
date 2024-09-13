@@ -31,9 +31,11 @@ schedule_interval = int(os.getenv("SCHEDULE_INTERVAL_SECONDS", 7200))
 if not telegram_bot_token:
     log("Missing TELEGRAM_BOT_TOKEN environment variable. Please provide a value for that")
     sys.exit(-1)
+
 if not telegram_chat_id:
     log("Missing TELEGRAM_BOT_CHATID environment variable. Please provide a value for that")
     sys.exit(-2)
+
 if csv_file_path:
     file_path = csv_file_path
     log("WARNING: CSV_FILE_PATH environment variable is now OBSOLETE. Please use FILE_PATH instead")
@@ -57,7 +59,7 @@ def schedule_task():
         time.sleep(schedule_interval)
 
 # Add newspost URL to a defined file
-def add_string_to_file(file_path, string_to_add):
+def append_record(file_path, string_to_add):
     try:
         with open(file_path, mode='a+') as file:
             print(string_to_add, file=file)
@@ -66,7 +68,7 @@ def add_string_to_file(file_path, string_to_add):
 
 # Check whether newspost URL is already present in the file
 # meaning: it has already been announced
-def check_and_add_string(file_path, string_to_add):
+def add_record_if_missing(file_path, string_to_add):
     try:
         with open(file_path, mode='r') as file:
             for line in file:
@@ -75,7 +77,7 @@ def check_and_add_string(file_path, string_to_add):
     except Exception:
         log("Unable to read records file. Skipping operation")
 
-    add_string_to_file(file_path, string_to_add)
+    append_record(file_path, string_to_add)
     return True
 
 # iterate through the found newsposts, checking they already have been announced (href present in the file)
@@ -96,7 +98,7 @@ def news_fetch():
 
         # Check whether the newspost shall be notified via Telegram by checking whether the newspost href is already stored
         # in the file
-        shall_notify = check_and_add_string(file_path, link_href)
+        shall_notify = add_record_if_missing(file_path, link_href)
 
         # If this has not been notified, then prepare payload, fetch the newspost image and send the Telegram API request
         if (shall_notify):
