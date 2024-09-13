@@ -55,17 +55,13 @@ def add_string_to_csv(file_path, string_to_add):
 def check_and_add_string(file_path, string_to_add):
     with open(file_path, mode='r', newline='') as file:
         reader = csv.reader(file)
-        string_found = False
         for row in reader:
             if string_to_add in row:
-                string_found = True
+                return False
                 break
 
-    if string_found:
-        return 1
-    else:
-        add_string_to_csv(file_path, string_to_add)
-        return 0
+    add_string_to_csv(file_path, string_to_add)
+    return True
 
 # iterate through the found newsposts, checking they already have been announced (href present in the CSV)
 # and, if not, send a telegram image with title and href as caption
@@ -88,7 +84,7 @@ def news_fetch():
         shall_notify = check_and_add_string(csv_file_path, link_href)
 
         # If this has not been notified, then prepare payload, fetch the newspost image and send the Telegram API request
-        if (shall_notify==0):
+        if (shall_notify):
             link_title = link.find('a').get('title')
             link_day = link.find_all("span", class_="dataGiorno")[0].get_text()
             link_month = link.find_all("span", class_="dataMese")[0].get_text()
