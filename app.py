@@ -58,17 +58,22 @@ def schedule_task():
 
 # Add newspost URL to a defined file
 def add_string_to_file(file_path, string_to_add):
-    with open(file_path, mode='a+') as file:
-        print(string_to_add, file=file)
+    try:
+        with open(file_path, mode='a+') as file:
+            print(string_to_add, file=file)
+    except Exception:
+        log('ERROR: Unable to write on records file')
 
 # Check whether newspost URL is already present in the file
 # meaning: it has already been announced
 def check_and_add_string(file_path, string_to_add):
-    with open(file_path, mode='r+') as file:
-        while True:
-            line = file.readline()
-            if string_to_add in line:
-                return False
+    try:
+        with open(file_path, mode='r') as file:
+            for line in file:
+                if string_to_add in line:
+                    return False
+    except Exception:
+        log("Unable to read records file. Skipping operation")
 
     add_string_to_file(file_path, string_to_add)
     return True
