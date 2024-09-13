@@ -7,9 +7,9 @@
 # It was developed because crucial information for parents is posted there (e.g. strikes) but the school does not provide
 # any way to get such information in a notification manner
 
+import sys
 import requests
 import re
-import csv
 import io
 import os
 import threading
@@ -17,11 +17,36 @@ import time
 import datetime
 from bs4 import BeautifulSoup
 
+def log(message):
+    print(f'[{datetime.datetime.now():%Y-%m-%d %H:%M:%S}] {message}')
+
 # Dynamic configuration
 telegram_bot_token = os.environ.get("TELEGRAM_BOT_TOKEN")
 telegram_chat_id = os.environ.get("TELEGRAM_BOT_CHATID")
 csv_file_path = os.environ.get("CSV_FILE_PATH")
+file_path = os.environ.get("FILE_PATH")
 schedule_interval = int(os.getenv("SCHEDULE_INTERVAL_SECONDS", 7200))
+
+# Check required parameters
+if not telegram_bot_token:
+    log("Missing TELEGRAM_BOT_TOKEN environment variable. Please provide a value for that")
+    sys.exit(-1)
+
+if not telegram_chat_id:
+    log("Missing TELEGRAM_BOT_CHATID environment variable. Please provide a value for that")
+    sys.exit(-2)
+
+if csv_file_path:
+    file_path = csv_file_path
+    log("WARNING: CSV_FILE_PATH environment variable is now OBSOLETE. Please use FILE_PATH instead")
+
+if not file_path:
+    file_path = "records.txt"
+    log("No storage file selected. Using 'records.txt'. All records will be deleted along with container")
+
+# Avoid interval less than 2 hours. No need to spam that server
+if schedule_interval < 7200:
+    schedule_interval = 7200
 
 # Static configuration
 school_url = 'https://5icudine.edu.it'
@@ -33,30 +58,29 @@ def schedule_task():
         news_fetch()
         time.sleep(schedule_interval)
 
-# Add newspost URL to a defined CSV file
-def add_string_to_csv(file_path, string_to_add):
-    with open(file_path, mode='a', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow([string_to_add])
+# Add newspost URL to a defined file
+def append_record(file_path, string_to_add):
+    try:
+        with open(file_path, mode='a+') as file:
+            print(string_to_add, file=file)
+    except Exception:
+        log('ERROR: Unable to write on records file')
 
-# Check whether newspost URL is already present in the CSV file
+# Check whether newspost URL is already present in the file
 # meaning: it has already been announced
-def check_and_add_string(file_path, string_to_add):
-    with open(file_path, mode='r', newline='') as file:
-        reader = csv.reader(file)
-        string_found = False
-        for row in reader:
-            if string_to_add in row:
-                string_found = True
-                break
+def add_record_if_missing(file_path, string_to_add):
+    try:
+        with open(file_path, mode='r') as file:
+            for line in file:
+                if string_to_add in line:
+                    return False
+    except Exception:
+        log("Unable to read records file. Skipping operation")
 
-    if string_found:
-        return 1
-    else:
-        add_string_to_csv(file_path, string_to_add)
-        return 0
+    append_record(file_path, string_to_add)
+    return True
 
-# iterate through the found newsposts, checking they already have been announced (href present in the CSV)
+# iterate through the found newsposts, checking they already have been announced (href present in the file)
 # and, if not, send a telegram image with title and href as caption
 def news_fetch():
     # Send request to fetch the HTML source from the school website
@@ -67,17 +91,17 @@ def news_fetch():
     soup = BeautifulSoup(html_source, 'html.parser')
     articles = soup.find_all("div", "layout-articolo2")
 
-    print('{:%Y-%m-%d %H:%M:%S} fetching...'.format(datetime.datetime.now()))
+    log('fetching...')
     for link in reversed(articles):
         # Fetch newsposts href
         link_href = link.find('a').get('href')
 
         # Check whether the newspost shall be notified via Telegram by checking whether the newspost href is already stored
-        # in the CSV file
-        shall_notify = check_and_add_string(csv_file_path, link_href)
+        # in the file
+        shall_notify = add_record_if_missing(file_path, link_href)
 
         # If this has not been notified, then prepare payload, fetch the newspost image and send the Telegram API request
-        if (shall_notify==0):
+        if (shall_notify):
             link_title = link.find('a').get('title')
             link_day = link.find_all("span", class_="dataGiorno")[0].get_text()
             link_month = link.find_all("span", class_="dataMese")[0].get_text()
@@ -101,10 +125,10 @@ def news_fetch():
             }
             response = requests.post(telegram_url, data=params, files=files)
             if response.status_code == 200:
-                print("{:%Y-%m-%d %H:%M:%S} Message sent successfully: ".format(datetime.datetime.now())+link_title)
+                log(f'Message sent successfully: {link_title}')
             else:
-                print("{:%Y-%m-%d %H:%M:%S} Failed to send message. Response code: ".format(datetime.datetime.now())+str(response.status_code))
-                print(response.text)
+                log(f'Failed to send message. Response code: {response.status_code}')
+                log(response.text)
 
 # Actual start of the task scheduler
 task_thread = threading.Thread(target=schedule_task)
