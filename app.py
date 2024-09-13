@@ -10,7 +10,6 @@
 import sys
 import requests
 import re
-import csv
 import io
 import os
 import threading
@@ -22,6 +21,7 @@ from bs4 import BeautifulSoup
 telegram_bot_token = os.environ.get("TELEGRAM_BOT_TOKEN")
 telegram_chat_id = os.environ.get("TELEGRAM_BOT_CHATID")
 csv_file_path = os.environ.get("CSV_FILE_PATH")
+file_path = os.environ.get("FILE_PATH")
 schedule_interval = int(os.getenv("SCHEDULE_INTERVAL_SECONDS", 7200))
 
 # Check required parameters
@@ -29,6 +29,13 @@ if not telegram_bot_token:
     sys.exit("Missing TELEGRAM_BOT_TOKEN environment variable. Please provide a value for that")
 if not telegram_chat_id:
     sys.exit("Missing TELEGRAM_BOT_CHATID environment variable. Please provide a value for that")
+if csv_file_path:
+    file_path = csv_file_path
+    print("WARNING: CSV_FILE_PATH environment variable is now OBSOLETE. Please use FILE_PATH instead")
+
+if not file_path:
+    filePath = "records.txt"
+    print("No storage file selected. All records will be deleted along with container")
 
 # Avoid interval less than 2 hours. No need to spam that server
 if schedule_interval < 7200:
@@ -44,26 +51,24 @@ def schedule_task():
         news_fetch()
         time.sleep(schedule_interval)
 
-# Add newspost URL to a defined CSV file
-def add_string_to_csv(file_path, string_to_add):
-    with open(file_path, mode='a', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow([string_to_add])
+# Add newspost URL to a defined file
+def add_string_to_file(file_path, string_to_add):
+    with open(file_path, mode='a+') as file:
+        print(string_to_add, file=file)
 
-# Check whether newspost URL is already present in the CSV file
+# Check whether newspost URL is already present in the file
 # meaning: it has already been announced
 def check_and_add_string(file_path, string_to_add):
-    with open(file_path, mode='r', newline='') as file:
-        reader = csv.reader(file)
-        for row in reader:
-            if string_to_add in row:
+    with open(file_path, mode='r+') as file:
+        while True:
+            line = file.readline()
+            if string_to_add in line:
                 return False
-                break
 
-    add_string_to_csv(file_path, string_to_add)
+    add_string_to_file(file_path, string_to_add)
     return True
 
-# iterate through the found newsposts, checking they already have been announced (href present in the CSV)
+# iterate through the found newsposts, checking they already have been announced (href present in the file)
 # and, if not, send a telegram image with title and href as caption
 def news_fetch():
     # Send request to fetch the HTML source from the school website
@@ -80,8 +85,8 @@ def news_fetch():
         link_href = link.find('a').get('href')
 
         # Check whether the newspost shall be notified via Telegram by checking whether the newspost href is already stored
-        # in the CSV file
-        shall_notify = check_and_add_string(csv_file_path, link_href)
+        # in the file
+        shall_notify = check_and_add_string(file_path, link_href)
 
         # If this has not been notified, then prepare payload, fetch the newspost image and send the Telegram API request
         if (shall_notify):
