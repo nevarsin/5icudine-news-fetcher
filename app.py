@@ -26,6 +26,7 @@ telegram_chat_id = os.environ.get("TELEGRAM_BOT_CHATID")
 csv_file_path = os.environ.get("CSV_FILE_PATH")
 file_path = os.environ.get("FILE_PATH")
 schedule_interval = int(os.getenv("SCHEDULE_INTERVAL_SECONDS", 7200))
+healthcheck_url = os.environ.get("HEALTHCHECK_URL")
 
 # Check required parameters
 if not telegram_bot_token:
@@ -90,6 +91,10 @@ def news_fetch():
     # Parse the fetched HTML and filter through it to find the <div> element containing the newsposts
     soup = BeautifulSoup(html_source, 'html.parser')
     articles = soup.find_all("div", "layout-articolo2")
+
+    # If Healthcheck URL has been filled, call that at every news_fetch() scheduling
+    if healthcheck_url:
+        requests.get(healthcheck_url)
 
     log('fetching...')
     for link in reversed(articles):

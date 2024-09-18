@@ -31,6 +31,7 @@ export TELEGRAM_BOT_TOKEN=<your_telegram_bot_token>
 export TELEGRAM_BOT_CHATID=<your telegram chatid>
 export FILE_PATH=<path to your CSV file> # required for keeping track of already_posted newsposts
 export SCHEDULE_INTERVAL_SECONDS=<number in seconds> # optional, defaults to 7200s (2h) if set lower or not set at all
+export HEALTHCHECK_URL=<http://yoururl> # optional, if valued will be called (HTTP GET) at every SCHEDULE_INTERVAL_SECONDS
 python app.py
 ```
 
@@ -40,6 +41,7 @@ docker run -d -e TELEGRAM_BOT_TOKEN='<your_telegram_bot_token>' \
 -e TELEGRAM_BOT_CHATID='<your telegram chatid>' \
 -e FILE_PATH='<path to your CSV file>' \
 -e SCHEDULE_INTERVAL_SECONDS='<number in seconds>' \
+-e HEALTHCHECK_URL=<http://yoururl> \
 -v $(pwd)/yourfile.csv:/usr/src/app/yourfile.csv \ # in case you want persistence
 stefanochittaro/5icudine_news_fetcher:0.1.2
 ```

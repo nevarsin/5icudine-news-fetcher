@@ -8,5 +8,6 @@ services:
       TELEGRAM_BOT_CHATID: "YOURTELEGRAMCHATID"
       FILE_PATH: "YOURFILE.csv"
       SCHEDULE_INTERVAL_SECONDS: "7200" # Optional
+      HEALTHCHECK_URL: http://yoururl # Optional
     volumes:
       - ./YOURFILE.csv:/usr/src/app/YOURFILE.csv # Optional for persistence
