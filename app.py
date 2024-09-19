@@ -94,7 +94,11 @@ def news_fetch():
 
     # If Healthcheck URL has been filled, call that at every news_fetch() scheduling
     if healthcheck_url:
-        requests.get(healthcheck_url)
+        try:
+            requests.get(healthcheck_url)
+        except Exception:
+            log("ERROR: Wrong URL Format, check syntax")
+            sys.exit(-2)
 
     log('fetching...')
     for link in reversed(articles):
